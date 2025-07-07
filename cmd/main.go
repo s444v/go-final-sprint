@@ -5,13 +5,22 @@ import (
 	"log"
 	"os"
 
+	"github.com/s444v/go-final-sprint/pkg/dbInit"
 	"github.com/s444v/go-final-sprint/pkg/server"
 	_ "modernc.org/sqlite"
 )
 
+var db *sql.DB
+var dbFileName = func() string {
+	if f := os.Getenv("TODO_DBFILE"); f != "" {
+		return f
+	}
+	return "scheduler.db"
+}()
+
 func main() {
 	logger := log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Llongfile)
-	err := db.dbConnect(dbFileName)
+	err := dbInit.DbConnect(dbFileName)
 	if err != nil {
 		logger.Fatalf("Ошибка в работе с базой данных: %v", err)
 	}
@@ -22,19 +31,5 @@ func main() {
 		logger.Fatal(err)
 	}
 }
-
-// -- db file
-const scheme = `
-    CREATE TABLE IF NOT EXISTS scheduler (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        title TEXT NOT NULL,
-        comment TEXT,
-        repeat TEXT CHECK(length(repeat) <= 128)
-    );
-    `
-
-var db *sql.DB
-var dbFileName = os.Getenv("TODO_DBFILE")
 
 // -- db file

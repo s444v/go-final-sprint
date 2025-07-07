@@ -1,4 +1,4 @@
-package db
+package dbInit
 
 import (
 	"database/sql"
@@ -7,14 +7,14 @@ import (
 const scheme = `
     CREATE TABLE IF NOT EXISTS scheduler (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        title VARCHAR NOT NULL,
+        date CHAR(8) NOT NULL,
+        title VARCHAR(255) NOT NULL,
         comment TEXT,
-        repeat VARCHAR CHECK(length(repeat) <= 128)
+        repeat VARCHAR(128) NOT NULL CHECK(length(repeat) <= 128)
     );
     `
 
-func dbConnect(dbFile string) error {
+func DbConnect(dbFile string) error {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		return err
