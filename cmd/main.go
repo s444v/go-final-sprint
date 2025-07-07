@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/s444v/go-final-sprint/pkg/dbInit"
+	"github.com/s444v/go-final-sprint/pkg/database"
 	"github.com/s444v/go-final-sprint/pkg/server"
 	_ "modernc.org/sqlite"
 )
@@ -20,7 +20,7 @@ var dbFileName = func() string {
 
 func main() {
 	logger := log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Llongfile)
-	err := dbInit.DbConnect(dbFileName)
+	err := database.DbConnect(dbFileName)
 	if err != nil {
 		logger.Fatalf("Ошибка в работе с базой данных: %v", err)
 	}
@@ -31,5 +31,3 @@ func main() {
 		logger.Fatal(err)
 	}
 }
-
-// -- db file

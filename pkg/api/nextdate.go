@@ -1,16 +1,21 @@
-package main
+package api
 
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
+func nextDayHandler(http.ResponseWriter, *http.Request) {
+
+}
+
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	rule := strings.Split(repeat, " ")
-	nextDate, err := time.Parse("20060102", dstart)
+	nextDate, err := time.Parse(timeFormat, dstart)
 	if err != nil {
 		return "", err
 	}
@@ -63,34 +68,9 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	default:
 		return "", errors.New("wrong rule")
 	}
-	return nextDate.Format("20060102"), nil
+	return nextDate.Format(timeFormat), nil
 }
 
 func afterNow(date, now time.Time) bool {
 	return date.After(now)
 }
-
-// func main() {
-// 	now := time.Date(2024, 01, 26, 0, 0, 0, 0, time.UTC)
-// 	res, _ := NextDate(now, "20240229", "y")
-// 	if res != "20250301" {
-// 		fmt.Println("не прошел")
-// 	}
-
-// 	res, _ = NextDate(now, "20240113", "d 7")
-// 	if res != "20240127" {
-// 		fmt.Println("не прошел")
-// 	}
-
-// 	res, _ = NextDate(now, "20240116", "w 2,6")
-// 	if res != "20240127" {
-// 		fmt.Println("не прошел")
-// 		fmt.Println(res)
-// 	}
-
-// 	// res, err = NextDate(now, "20240201", "m -1,18")
-// 	// if res != "20240218" {
-// 	// 	fmt.Println("не прошел")
-// 	// }
-// 	//fmt.Println(res, err)
-// }

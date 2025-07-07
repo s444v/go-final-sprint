@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/s444v/go-final-sprint/pkg/api"
 )
 
 type Server struct {
 	Logger *log.Logger
 	HTTP   *http.Server
 }
-
-const WEBDIR = "./web"
 
 var PORT = ":" + func() string {
 	if p := os.Getenv("TODO_PORT"); p != "" {
@@ -23,7 +23,7 @@ var PORT = ":" + func() string {
 
 func NewServer(logger *log.Logger) *Server {
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
+	api.HandersInit(mux)
 
 	httpServer := &http.Server{
 		Addr:         PORT,
