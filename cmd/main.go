@@ -5,13 +5,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/s444v/go-final-sprint/internal/server"
+	"github.com/s444v/go-final-sprint/pkg/server"
 	_ "modernc.org/sqlite"
 )
 
 func main() {
 	logger := log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Llongfile)
-	err := dbConnect(dbFileName)
+	err := db.dbConnect(dbFileName)
 	if err != nil {
 		logger.Fatalf("Ошибка в работе с базой данных: %v", err)
 	}
@@ -36,17 +36,5 @@ const scheme = `
 
 var db *sql.DB
 var dbFileName = os.Getenv("TODO_DBFILE")
-
-func dbConnect(dbFile string) error {
-	db, err := sql.Open("sqlite", dbFile)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(scheme)
-	if err != nil {
-		return err
-	}
-	return err
-}
 
 // -- db file
