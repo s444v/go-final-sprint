@@ -28,64 +28,176 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 
 func nextDate(now time.Time, dstart string, repeat string) (string, error) {
 	rule := strings.Split(repeat, " ")
+	switch rule[0] {
+	case "d":
+		nextDate, err := dRule(rule, dstart, now)
+		if err != nil {
+			return "", fmt.Errorf("cant find next date %w", err)
+		}
+		return nextDate, err
+	case "y":
+		nextDate, err := yRule(dstart, now)
+		if err != nil {
+			return "", fmt.Errorf("cant find next date %w", err)
+		}
+		return nextDate, err
+	case "w":
+		nextDate, err := wRule(rule, dstart, now)
+		if err != nil {
+			return "", fmt.Errorf("cant find next date %w", err)
+		}
+		return nextDate, err
+	case "m":
+		nextDate, err := mRule(rule, dstart, now)
+		if err != nil {
+			return "", fmt.Errorf("cant find next date %w", err)
+		}
+		return nextDate, err
+	default:
+		return "", errors.New("wrong rule")
+	}
+}
+
+func yRule(dstart string, now time.Time) (string, error) {
+	nextDate, err := time.Parse(TIMEFORMAT, dstart)
+	if err != nil {
+		return "", fmt.Errorf("cant find next date %w", err)
+	}
+	for {
+		nextDate = nextDate.AddDate(1, 0, 0)
+		if afterNow(nextDate, now) {
+			break
+		}
+	}
+	return nextDate.Format(TIMEFORMAT), err
+}
+
+func wRule(rule []string, dstart string, now time.Time) (string, error) {
+	if len(rule) != 2 {
+		return "", errors.New("wrong rule format")
+	}
+	weekDays := strings.Split(rule[1], ",")
+	nowWeekDay := now.Weekday()
+	dist := 7
+	for _, v := range weekDays {
+		weekDay, err := strconv.Atoi(v)
+		if err != nil {
+			return "", fmt.Errorf("conv error %w", err)
+		}
+		if weekDay < 1 || weekDay > 7 {
+			return "", errors.New("wrong day of the week")
+		}
+		weekDay = weekDay % 7
+		if dist > (weekDay-int(nowWeekDay)+7)%8 {
+			dist = (weekDay - int(nowWeekDay) + 7) % 8
+		}
+	}
+	nextDate := now.AddDate(0, 0, dist)
+	return nextDate.Format(TIMEFORMAT), nil
+}
+
+func dRule(rule []string, dstart string, now time.Time) (string, error) {
+	nextDate, err := time.Parse(TIMEFORMAT, dstart)
+	if err != nil {
+		return "", fmt.Errorf("conv error %w", err)
+	}
+	if len(rule) != 2 {
+		return "", errors.New("wrong rule format")
+	}
+	interval, err := strconv.Atoi(rule[1])
+	if err != nil {
+		return "", fmt.Errorf("conv error %w", err)
+	}
+	if interval > 400 || interval < 0 {
+		return "", fmt.Errorf("wrong number of days %w", err)
+	}
+	for {
+		nextDate = nextDate.AddDate(0, 0, interval)
+		if afterNow(nextDate, now) {
+			break
+		}
+	}
+	return nextDate.Format(TIMEFORMAT), err
+}
+
+func mRule(rule []string, dstart string, now time.Time) (string, error) {
 	nextDate, err := time.Parse(TIMEFORMAT, dstart)
 	if err != nil {
 		return "", err
 	}
-	switch rule[0] {
-	case "d":
-		if len(rule) != 2 {
-			return "", fmt.Errorf("wrong rule format")
-		}
-		interval, err := strconv.Atoi(rule[1])
-		if err != nil {
-			return "", fmt.Errorf("conv error %w", err)
-		}
-		if interval > 400 || interval < 0 {
-			return "", fmt.Errorf("wrong number of days %w", err)
-		}
-		for {
-			nextDate = nextDate.AddDate(0, 0, interval)
-			if afterNow(nextDate, now) {
-				break
-			}
-		}
-	case "y":
-		for {
-			nextDate = nextDate.AddDate(1, 0, 0)
-			if afterNow(nextDate, now) {
-				break
-			}
-		}
-	case "w":
-		if len(rule) != 2 {
-			return "", fmt.Errorf("wrong rule format")
-		}
-		weekDays := strings.Split(rule[1], ",")
-		nowWeekDay := now.Weekday()
-		dist := 7
-		for _, v := range weekDays {
-			weekDay, err := strconv.Atoi(v)
+	if afterNow(now, nextDate) {
+		nextDate = now
+	}
+	if len(rule) == 2 {
+		days := strings.Split(rule[1], ",")
+		nearestDay := 32
+		month := 1
+		//dayLower := 0
+		//check := false
+		for _, v := range days {
+			day, err := strconv.Atoi(v)
 			if err != nil {
 				return "", fmt.Errorf("conv error %w", err)
 			}
-			if weekDay < 1 || weekDay > 7 {
-				return "", fmt.Errorf("wrong day of the week")
+			if day > 31 {
+				return "", errors.New("wrong day of the month")
 			}
-			weekDay = weekDay % 7
-			if dist > (weekDay-int(nowWeekDay)+7)%8 {
-				dist = (weekDay - int(nowWeekDay) + 7) % 8
+			if day < 0 {
+				day++
+				if nextDate.Day() >= daysInMonth(nextDate.Year(), nextDate.Month())+day {
+					day = daysInMonth(nextDate.Year(), nextDate.Month()+1) + day
+				} else {
+					day = daysInMonth(nextDate.Year(), nextDate.Month()) + day
+				}
+			}
+			if nearestDay > day {
+				nearestDay = day
+			}
+			if nextDate.Day() < day {
+				//check = true
+				//dayLower
 			}
 		}
-		nextDate = now.AddDate(0, 0, dist)
-	case "m":
-		if len(rule) != 2 || len(rule) != 3 {
-			return "", fmt.Errorf("wrong rule format")
-		}
-	default:
-		return "", errors.New("wrong rule")
+		nextDate = nextDate.AddDate(0, month, 0)
+		nextDate = findNextValidDate(nextDate, nearestDay)
+	} else if len(rule) == 3 {
+
+	} else {
+		return "", errors.New("wrong rule format")
 	}
 	return nextDate.Format(TIMEFORMAT), nil
+}
+
+// func daysToEndOfMonth(month int, year int, day int) int {
+// 	nextMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).AddDate(0, 1, 0)
+// 	lastDayOfMonth := nextMonth.AddDate(0, 0, -1).Day()
+// 	return lastDayOfMonth + day
+// }
+
+func findNextValidDate(baseDate time.Time, targetDay int) time.Time {
+	year := baseDate.Year()
+	month := baseDate.Month()
+
+	for {
+		// Переходим на следующий месяц
+		if month > 12 {
+			month = 1
+			year++
+		}
+
+		// Пробуем создать дату с нужным числом
+		if targetDay <= daysInMonth(year, month) {
+			return time.Date(year, month, targetDay, 0, 0, 0, 0, baseDate.Location())
+		}
+		month++
+	}
+}
+
+func daysInMonth(year int, month time.Month) int {
+	// Берем 1-е число следующего месяца, вычитаем 1 день
+	t := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	t = t.AddDate(0, 1, -1)
+	return t.Day()
 }
 
 func afterNow(date, now time.Time) bool {
