@@ -9,13 +9,26 @@ import (
 	"time"
 )
 
-func nextDayHandler(http.ResponseWriter, *http.Request) {
-
+func nextDayHandler(w http.ResponseWriter, r *http.Request) {
+	now, err := time.Parse(TIMEFORMAT, r.FormValue("now"))
+	if err != nil {
+		http.Error(w, "cant parse time", http.StatusBadRequest)
+		return
+	}
+	date := r.FormValue("date")
+	repeat := r.FormValue("repeat")
+	result, err := nextDate(now, date, repeat)
+	if err != nil {
+		http.Error(w, "cant find next date", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(result))
 }
 
-func NextDate(now time.Time, dstart string, repeat string) (string, error) {
+func nextDate(now time.Time, dstart string, repeat string) (string, error) {
 	rule := strings.Split(repeat, " ")
-	nextDate, err := time.Parse(timeFormat, dstart)
+	nextDate, err := time.Parse(TIMEFORMAT, dstart)
 	if err != nil {
 		return "", err
 	}
@@ -27,6 +40,9 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		interval, err := strconv.Atoi(rule[1])
 		if err != nil {
 			return "", fmt.Errorf("conv error %w", err)
+		}
+		if interval > 400 || interval < 0 {
+			return "", fmt.Errorf("wrong number of days %w", err)
 		}
 		for {
 			nextDate = nextDate.AddDate(0, 0, interval)
@@ -53,11 +69,12 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("conv error %w", err)
 			}
-			if weekDay == 7 {
-				weekDay--
+			if weekDay < 1 || weekDay > 7 {
+				return "", fmt.Errorf("wrong day of the week")
 			}
-			if dist > (weekDay-int(nowWeekDay)+7)%7 {
-				dist = (weekDay - int(nowWeekDay) + 7) % 7
+			weekDay = weekDay % 7
+			if dist > (weekDay-int(nowWeekDay)+7)%8 {
+				dist = (weekDay - int(nowWeekDay) + 7) % 8
 			}
 		}
 		nextDate = now.AddDate(0, 0, dist)
@@ -68,7 +85,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	default:
 		return "", errors.New("wrong rule")
 	}
-	return nextDate.Format(timeFormat), nil
+	return nextDate.Format(TIMEFORMAT), nil
 }
 
 func afterNow(date, now time.Time) bool {

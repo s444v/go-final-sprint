@@ -2,7 +2,7 @@ package api
 
 import "net/http"
 
-const timeFormat = "20060102"
+const TIMEFORMAT = "20060102"
 const WEBDIR = "./web"
 
 func HandlersInit(mux *http.ServeMux) {

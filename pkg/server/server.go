@@ -23,7 +23,7 @@ var PORT = ":" + func() string {
 
 func NewServer(logger *log.Logger) *Server {
 	mux := http.NewServeMux()
-	api.HandersInit(mux)
+	api.HandlersInit(mux)
 
 	httpServer := &http.Server{
 		Addr:         PORT,
