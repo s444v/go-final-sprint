@@ -121,82 +121,104 @@ func dRule(rule []string, dstart string, now time.Time) (string, error) {
 }
 
 func mRule(rule []string, dstart string, now time.Time) (string, error) {
-	nextDate, err := time.Parse(TIMEFORMAT, dstart)
+	startDate, err := time.Parse(TIMEFORMAT, dstart)
+	result := ""
 	if err != nil {
-		return "", err
+		return result, err
 	}
-	if afterNow(now, nextDate) {
-		nextDate = now
+	if afterNow(now, startDate) {
+		startDate = now
 	}
+	var nearestDate time.Time
+	days := strings.Split(rule[1], ",")
 	if len(rule) == 2 {
-		days := strings.Split(rule[1], ",")
-		nearestDay := 32
-		month := 1
-		//dayLower := 0
-		//check := false
-		for _, v := range days {
-			day, err := strconv.Atoi(v)
+		//days := strings.Split(rule[1], ",")
+		first := true
+		for _, d := range days {
+			day, err := strconv.Atoi(d)
 			if err != nil {
-				return "", fmt.Errorf("conv error %w", err)
+				return result, fmt.Errorf("conv error %w", err)
 			}
-			if day > 31 {
-				return "", errors.New("wrong day of the month")
+			if day > 31 || day < -2 {
+				return result, errors.New("wrong day of the month")
 			}
-			if day < 0 {
-				day++
-				if nextDate.Day() >= daysInMonth(nextDate.Year(), nextDate.Month())+day {
-					day = daysInMonth(nextDate.Year(), nextDate.Month()+1) + day
-				} else {
-					day = daysInMonth(nextDate.Year(), nextDate.Month()) + day
-				}
+			if first {
+				nearestDate = findNextValidDate(startDate, day)
+				first = false
+				continue
 			}
-			if nearestDay > day {
-				nearestDay = day
-			}
-			if nextDate.Day() < day {
-				//check = true
-				//dayLower
+			if afterNow(nearestDate, findNextValidDate(startDate, day)) {
+				nearestDate = findNextValidDate(startDate, day)
 			}
 		}
-		nextDate = nextDate.AddDate(0, month, 0)
-		nextDate = findNextValidDate(nextDate, nearestDay)
+		result = nearestDate.Format(TIMEFORMAT)
 	} else if len(rule) == 3 {
-
+		months := strings.Split(rule[2], ",")
+		found := false
+		for _, m := range months {
+			month, err := strconv.Atoi(m)
+			if err != nil {
+				return result, fmt.Errorf("conv error %w", err)
+			}
+			if month > 12 || month < 1 {
+				return result, errors.New("wrong month")
+			}
+			for _, d := range days {
+				day, err := strconv.Atoi(d)
+				if err != nil {
+					return result, fmt.Errorf("conv error %w", err)
+				}
+				if day > 31 || day < -2 {
+					return result, errors.New("wrong day of the month")
+				}
+				d := time.Date(startDate.Year(), time.Month(month), day, 0, 0, 0, 0, time.UTC)
+				if d.Month() != time.Month(month) || d.Day() != day {
+					continue
+				}
+				if (d.Equal(startDate) || d.After(startDate)) && (!found || d.Before(nearestDate)) {
+					nearestDate = d
+					found = true
+				}
+			}
+			result = nearestDate.Format(TIMEFORMAT)
+		}
 	} else {
-		return "", errors.New("wrong rule format")
+		return result, errors.New("wrong rule format")
 	}
-	return nextDate.Format(TIMEFORMAT), nil
+	return result, nil
 }
-
-// func daysToEndOfMonth(month int, year int, day int) int {
-// 	nextMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).AddDate(0, 1, 0)
-// 	lastDayOfMonth := nextMonth.AddDate(0, 0, -1).Day()
-// 	return lastDayOfMonth + day
-// }
 
 func findNextValidDate(baseDate time.Time, targetDay int) time.Time {
 	year := baseDate.Year()
 	month := baseDate.Month()
-
+	check := true
+	if targetDay < 0 {
+		check = false
+	}
+	if targetDay <= baseDate.Day() && check {
+		month += 1
+	} else if (daysInMonth(year, month)+targetDay+1 <= baseDate.Day() || daysInMonth(year, month)+targetDay+1 > daysInMonth(year, month)) && !check {
+		month += 1
+	}
 	for {
-		// Переходим на следующий месяц
 		if month > 12 {
 			month = 1
 			year++
 		}
-
-		// Пробуем создать дату с нужным числом
-		if targetDay <= daysInMonth(year, month) {
+		if targetDay <= daysInMonth(year, month) && check {
 			return time.Date(year, month, targetDay, 0, 0, 0, 0, baseDate.Location())
+		} else if daysInMonth(year, month)+targetDay+1 <= daysInMonth(year, month) {
+			return time.Date(year, month, daysInMonth(year, month)+targetDay+1, 0, 0, 0, 0, baseDate.Location())
 		}
-		month++
+		month += 1
 	}
 }
 
 func daysInMonth(year int, month time.Month) int {
 	// Берем 1-е число следующего месяца, вычитаем 1 день
 	t := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
-	t = t.AddDate(0, 1, -1)
+	t = t.AddDate(0, 1, 0)
+	t = t.AddDate(0, 0, -1)
 	return t.Day()
 }
 
