@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
@@ -10,7 +9,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var db *sql.DB
 var dbFileName = func() string {
 	if f := os.Getenv("TODO_DBFILE"); f != "" {
 		return f
@@ -20,7 +18,7 @@ var dbFileName = func() string {
 
 func main() {
 	logger := log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Llongfile)
-	err := database.DbConnect(dbFileName)
+	db, err := database.DbInit(dbFileName)
 	if err != nil {
 		logger.Fatalf("Ошибка в работе с базой данных: %v", err)
 	}

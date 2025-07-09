@@ -3,30 +3,12 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func nextDayHandler(w http.ResponseWriter, r *http.Request) {
-	now, err := time.Parse(TIMEFORMAT, r.FormValue("now"))
-	if err != nil {
-		http.Error(w, "cant parse time", http.StatusBadRequest)
-		return
-	}
-	date := r.FormValue("date")
-	repeat := r.FormValue("repeat")
-	result, err := nextDate(now, date, repeat)
-	if err != nil {
-		http.Error(w, "cant find next date", http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
-}
-
-func nextDate(now time.Time, dstart string, repeat string) (string, error) {
+func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	rule := strings.Split(repeat, " ")
 	switch rule[0] {
 	case "d":
@@ -132,7 +114,6 @@ func mRule(rule []string, dstart string, now time.Time) (string, error) {
 	var nearestDate time.Time
 	days := strings.Split(rule[1], ",")
 	if len(rule) == 2 {
-		//days := strings.Split(rule[1], ",")
 		first := true
 		for _, d := range days {
 			day, err := strconv.Atoi(d)
@@ -215,7 +196,6 @@ func findNextValidDate(baseDate time.Time, targetDay int) time.Time {
 }
 
 func daysInMonth(year int, month time.Month) int {
-	// Берем 1-е число следующего месяца, вычитаем 1 день
 	t := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	t = t.AddDate(0, 1, 0)
 	t = t.AddDate(0, 0, -1)
@@ -223,5 +203,16 @@ func daysInMonth(year int, month time.Month) int {
 }
 
 func afterNow(date, now time.Time) bool {
-	return date.After(now)
+	dy, dm, dd := date.Date()
+	ny, nm, nd := now.Date()
+
+	if dy != ny {
+		return dy > ny
+	}
+
+	if dm != nm {
+		return dm > nm
+	}
+
+	return dd > nd
 }

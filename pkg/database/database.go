@@ -14,14 +14,17 @@ const scheme = `
     );
     `
 
-func DbConnect(dbFile string) error {
+var DB *sql.DB
+
+func DbInit(dbFile string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return err
+		return db, err
 	}
 	_, err = db.Exec(scheme)
 	if err != nil {
-		return err
+		return db, err
 	}
-	return err
+	DB = db
+	return db, err
 }
