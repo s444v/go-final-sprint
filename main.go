@@ -18,11 +18,11 @@ var dbFileName = func() string {
 
 func main() {
 	logger := log.New(os.Stdout, "Info: ", log.Ldate|log.Ltime|log.Llongfile)
-	db, err := database.DbInit(dbFileName)
+	err := database.DbInit(dbFileName)
 	if err != nil {
 		logger.Fatalf("Ошибка в работе с базой данных: %v", err)
 	}
-	defer db.Close()
+	defer database.DB.Close()
 	server := server.NewServer(logger)
 	err = server.HTTP.ListenAndServe()
 	if err != nil {

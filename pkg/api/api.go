@@ -14,7 +14,7 @@ func HandlersInit(mux *http.ServeMux) {
 	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
 	mux.HandleFunc("/api/nextdate", nextDayHandler)
 	mux.HandleFunc("/api/task", taskHandler)
-	mux.HandleFunc("/api/tasks", tasksHandler)
+	mux.HandleFunc("/api/tasks", getTasksHandler)
 	mux.HandleFunc("/api/task/done", doneTaskHandler)
 }
 

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/s444v/go-final-sprint/pkg/database"
 )
@@ -42,34 +41,4 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 	writeJSON(w, map[string]string{"id": fmt.Sprint(id)})
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(v)
-}
-
-func checkDate(task *database.Task) error {
-	now := time.Now()
-	if task.Date == "" {
-		task.Date = now.Format(TIMEFORMAT)
-	}
-	t, err := time.Parse(TIMEFORMAT, task.Date)
-	if err != nil {
-		return fmt.Errorf("дата представлена в формате, отличном от 20060102, %w", err)
-	}
-	next, err := NextDate(now, task.Date, task.Repeat)
-	if err != nil {
-		return err
-	}
-	if afterNow(now, t) {
-		if len(task.Repeat) == 0 {
-			// если правила повторения нет, то берём сегодняшнее число
-			task.Date = now.Format(TIMEFORMAT)
-		} else {
-			// в противном случае, берём вычисленную ранее следующую дату
-			task.Date = next
-		}
-	}
-	return err
 }

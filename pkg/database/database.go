@@ -16,15 +16,14 @@ const scheme = `
 
 var DB *sql.DB
 
-func DbInit(dbFile string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", dbFile)
+func DbInit(dbFile string) error {
+	DB, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		return db, err
+		return err
 	}
-	_, err = db.Exec(scheme)
+	_, err = DB.Exec(scheme)
 	if err != nil {
-		return db, err
+		return err
 	}
-	DB = db
-	return db, err
+	return err
 }

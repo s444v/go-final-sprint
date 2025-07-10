@@ -35,14 +35,11 @@ func GetTask(id string) (*Task, error) {
 }
 
 func UpdateTask(task *Task) error {
-	// параметры пропущены, не забудьте указать WHERE
 	query := `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat= ? WHERE id = ?`
 	res, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
 	if err != nil {
 		return err
 	}
-	// метод RowsAffected() возвращает количество записей к которым
-	// был применена SQL команда
 	count, err := res.RowsAffected()
 	if err != nil {
 		return err
@@ -68,7 +65,7 @@ func DeleteTask(id string) error {
 	return nil
 }
 
-func Tasks(limit int, search string) ([]*Task, error) {
+func GetTasks(limit int, search string) ([]*Task, error) {
 	var tasks []*Task
 	query := "SELECT * from scheduler "
 	var whereQuery string
