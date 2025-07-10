@@ -12,6 +12,7 @@ func HandlersInit(mux *http.ServeMux) {
 	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
 	mux.HandleFunc("/api/nextdate", nextDayHandler)
 	mux.HandleFunc("/api/task", taskHandler)
+	mux.HandleFunc("/api/tasks", tasksHandler)
 }
 
 func nextDayHandler(w http.ResponseWriter, r *http.Request) {
