@@ -29,6 +29,9 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"error": "Ошибка"})
 		return
 	}
+	// if task.Repeat == "" {
+	// 	task.Date = time.Now().Format(TIMEFORMAT)
+	// }
 	if err = checkDate(&task); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
@@ -58,19 +61,17 @@ func checkDate(task *database.Task) error {
 	if err != nil {
 		return fmt.Errorf("дата представлена в формате, отличном от 20060102, %w", err)
 	}
-	if task.Repeat != "" {
-		next, err := NextDate(now, task.Date, task.Repeat)
-		if err != nil {
-			return err
-		}
-		if afterNow(now, t) {
-			if len(task.Repeat) == 0 {
-				// если правила повторения нет, то берём сегодняшнее число
-				task.Date = now.Format(TIMEFORMAT)
-			} else {
-				// в противном случае, берём вычисленную ранее следующую дату
-				task.Date = next
-			}
+	next, err := NextDate(now, task.Date, task.Repeat)
+	if err != nil {
+		return err
+	}
+	if afterNow(now, t) {
+		if len(task.Repeat) == 0 {
+			// если правила повторения нет, то берём сегодняшнее число
+			task.Date = now.Format(TIMEFORMAT)
+		} else {
+			// в противном случае, берём вычисленную ранее следующую дату
+			task.Date = next
 		}
 	}
 	return err

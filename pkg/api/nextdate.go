@@ -10,6 +10,9 @@ import (
 
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	rule := strings.Split(repeat, " ")
+	if rule[0] == "" {
+		return "", nil
+	}
 	switch rule[0] {
 	case "d":
 		nextDate, err := dRule(rule, dstart, now)
@@ -24,7 +27,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		}
 		return nextDate, err
 	case "w":
-		nextDate, err := wRule(rule, dstart, now)
+		nextDate, err := wRule(rule, now)
 		if err != nil {
 			return "", fmt.Errorf("cant find next date %w", err)
 		}
@@ -54,7 +57,7 @@ func yRule(dstart string, now time.Time) (string, error) {
 	return nextDate.Format(TIMEFORMAT), err
 }
 
-func wRule(rule []string, dstart string, now time.Time) (string, error) {
+func wRule(rule []string, now time.Time) (string, error) {
 	if len(rule) != 2 {
 		return "", errors.New("wrong rule format")
 	}

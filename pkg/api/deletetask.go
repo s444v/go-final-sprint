@@ -6,17 +6,18 @@ import (
 	"github.com/s444v/go-final-sprint/pkg/database"
 )
 
-func getTaskHandler(w http.ResponseWriter, r *http.Request) {
+func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": "id is required"})
 		return
 	}
-	task, err := database.GetTask(id)
-	if err != nil {
+	if err := database.DeleteTask(id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, task)
+	w.WriteHeader(http.StatusAccepted)
+	writeJSON(w, map[string]string{})
 }
