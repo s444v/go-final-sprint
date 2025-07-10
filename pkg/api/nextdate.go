@@ -27,7 +27,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		}
 		return nextDate, err
 	case "w":
-		nextDate, err := wRule(rule, now)
+		nextDate, err := wRule(rule, dstart, now)
 		if err != nil {
 			return "", fmt.Errorf("cant find next date %w", err)
 		}
@@ -57,12 +57,23 @@ func yRule(dstart string, now time.Time) (string, error) {
 	return nextDate.Format(TIMEFORMAT), err
 }
 
-func wRule(rule []string, now time.Time) (string, error) {
+func wRule(rule []string, dstart string, now time.Time) (string, error) {
+	nextDate, err := time.Parse(TIMEFORMAT, dstart)
+	if err != nil {
+		return "", fmt.Errorf("cant find next date %w", err)
+	}
+	if !afterNow(nextDate, now) {
+		nextDate = now
+	}
+	//nextDate, err := time.Parse(TIMEFORMAT, dstart)
+	// if err != nil {
+	// 	return "", fmt.Errorf("cant find next date %w", err)
+	// }
 	if len(rule) != 2 {
 		return "", errors.New("wrong rule format")
 	}
 	weekDays := strings.Split(rule[1], ",")
-	nowWeekDay := now.Weekday()
+	nowWeekDay := nextDate.Weekday()
 	dist := 7
 	for _, v := range weekDays {
 		weekDay, err := strconv.Atoi(v)
@@ -77,7 +88,7 @@ func wRule(rule []string, now time.Time) (string, error) {
 			dist = (weekDay - int(nowWeekDay) + 7) % 8
 		}
 	}
-	nextDate := now.AddDate(0, 0, dist)
+	nextDate = nextDate.AddDate(0, 0, dist)
 	return nextDate.Format(TIMEFORMAT), nil
 }
 

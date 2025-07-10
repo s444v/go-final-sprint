@@ -29,9 +29,6 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"error": "Ошибка"})
 		return
 	}
-	// if task.Repeat == "" {
-	// 	task.Date = time.Now().Format(TIMEFORMAT)
-	// }
 	if err = checkDate(&task); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
