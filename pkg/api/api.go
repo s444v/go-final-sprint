@@ -27,7 +27,8 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 	if repeat == "" {
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK) //тут исправить
+		return
 	}
 	result, err := NextDate(now, date, repeat)
 	if err != nil {
@@ -58,6 +59,7 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
+		return
 	}
 	if task.Repeat == "" {
 		err = database.DeleteTask(id)

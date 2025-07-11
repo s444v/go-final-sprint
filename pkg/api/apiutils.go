@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -23,15 +24,15 @@ func checkDate(task *database.Task) error {
 	if err != nil {
 		return fmt.Errorf("дата представлена в формате, отличном от 20060102, %w", err)
 	}
-	next, err := NextDate(now, task.Date, task.Repeat)
-	if err != nil {
-		return err
-	}
 	if after(now, t) {
 		if len(task.Repeat) == 0 {
 			// если правила повторения нет, то берём сегодняшнее число
 			task.Date = now.Format(TIMEFORMAT)
 		} else {
+			next, err := NextDate(now, task.Date, task.Repeat)
+			if err != nil {
+				return err
+			}
 			// в противном случае, берём вычисленную ранее следующую дату
 			task.Date = next
 		}
@@ -39,30 +40,16 @@ func checkDate(task *database.Task) error {
 	return err
 }
 
-func findNextValidDate(baseDate time.Time, targetDay int) time.Time {
+func isValidDate(baseDate time.Time, day int) bool {
 	year := baseDate.Year()
 	month := baseDate.Month()
-	check := true
-	if targetDay < 0 {
-		check = false
+	if day < 0 {
+		day = daysInMonth(year, month) + day + 1
 	}
-	if targetDay <= baseDate.Day() && check {
-		month += 1
-	} else if (daysInMonth(year, month)+targetDay+1 <= baseDate.Day() || daysInMonth(year, month)+targetDay+1 > daysInMonth(year, month)) && !check {
-		month += 1
-	}
-	for {
-		if month > 12 {
-			month = 1
-			year++
-		}
-		if targetDay <= daysInMonth(year, month) && check {
-			return time.Date(year, month, targetDay, 0, 0, 0, 0, baseDate.Location())
-		} else if daysInMonth(year, month)+targetDay+1 <= daysInMonth(year, month) {
-			return time.Date(year, month, daysInMonth(year, month)+targetDay+1, 0, 0, 0, 0, baseDate.Location())
-		}
-		month += 1
-	}
+	//fmt.Println(year, month, day)
+	t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	return t.Year() == year && int(t.Month()) == int(month) && t.Day() == day
+
 }
 
 func daysInMonth(year int, month time.Month) int {
@@ -84,4 +71,31 @@ func after(date1, date2 time.Time) bool {
 	}
 
 	return dd > nd
+}
+
+func validateRule(rule []string) error {
+	if len(rule) == 0 {
+		return errors.New("пустой массив rule")
+	}
+
+	letter := rule[0]
+
+	switch letter {
+	case "d", "w":
+		if len(rule) != 2 {
+			return fmt.Errorf("для '%s' ожидается 2 элемента, а получено %d", letter, len(rule))
+		}
+	case "y":
+		if len(rule) != 1 {
+			return fmt.Errorf("для 'y' ожидается 1 элемент, а получено %d", len(rule))
+		}
+	case "m":
+		if len(rule) != 2 && len(rule) != 3 {
+			return fmt.Errorf("для 'm' ожидается 2 или 3 элемента, а получено %d", len(rule))
+		}
+	default:
+		return fmt.Errorf("недопустимое значение в rule: '%s'", letter)
+	}
+
+	return nil
 }
