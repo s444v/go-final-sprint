@@ -18,16 +18,19 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 	}{}
 	err := json.NewDecoder(r.Body).Decode(&pass)
 	if err != nil || pass.Password == "" {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSON(w, map[string]string{"error": "Invalid request"})
 		return
 	}
 	correctPassword := os.Getenv("TODO_PASSWORD")
 	if correctPassword == "" {
-		http.Error(w, "Server misconfiguration", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		writeJSON(w, map[string]string{"error": "Server misconfiguration"})
 		return
 	}
 	if pass.Password != correctPassword {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSON(w, map[string]string{"error": "Unauthorized"})
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -37,7 +40,8 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -74,8 +78,10 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 			}
 
 			if !valid {
-				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				w.WriteHeader(http.StatusUnauthorized)
+				writeJSON(w, map[string]string{"error": "Authentication required"})
 				return
+
 			}
 		}
 		next(w, r)
