@@ -31,13 +31,60 @@
 
 ---
 
-## 🛠️ Установка и запуск локально
 
-### 🔧 Переменные окружения:
+## 🚀 Способы запуска
 
-Создайте `.env` файл или задайте переменные вручную:
+---
 
-```env
-TODO_PORT=7540
-TODO_DBFILE=scheduler.db
-TODO_PASSWORD=12345
+### 📦 Способ 1: Запуск через Docker Hub
+
+Готовый Docker-образ уже доступен на [Docker Hub](https://hub.docker.com/r/s444v/todoist).
+
+```bash
+docker pull s444v/todoist
+docker run -d -p 7540:7540 s444v/todoist
+```
+
+### 📦 Способ 2: Запуск с помощью файла compose.yaml
+
+Для запуска
+
+```bash
+docker-compose up --build -d
+```
+
+Для остановки
+
+```bash
+docker-compose down
+```
+
+### 📦 Способ 3: Запуск напрямую с помощью go run
+
+Переменные окружения (опционально):
+
+```bash
+export TODO_PORT=7540
+export TODO_DBFILE=scheduler.db
+export TODO_PASSWORD=12345
+```
+
+Запуск:
+
+```bash
+go run main.go
+```
+
+Запуск тестов:
+
+```bash
+go test -run ^TestApp$ ./tests # проверка сервера
+go test -run ^TestDB$ ./tests # проверка базы данных
+go test -run ^TestNextDate$ ./tests # проверка правил повторений
+go test -run ^TestAddTask$ ./tests # проверка добавлений задач
+go test -run ^TestTasks$ ./tests # проверка на поиск задачи
+go test -run ^TestEditTask$ ./tests # проверка редактирования задачи
+go test -run ^TestDone$ ./tests # проверка выполнения задачи
+go test -run ^TestDelTask$ ./tests # проверка удалений задач
+go test ./tests # все тесты
+```
