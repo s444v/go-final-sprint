@@ -14,9 +14,10 @@ const WEBDIR = "./web"
 func HandlersInit(mux *http.ServeMux) {
 	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
 	mux.HandleFunc("/api/nextdate", nextDayHandler)
-	mux.HandleFunc("/api/task", taskHandler)
-	mux.HandleFunc("/api/tasks", getTasksHandler)
-	mux.HandleFunc("/api/task/done", doneTaskHandler)
+	mux.HandleFunc("/api/task", auth(taskHandler))
+	mux.HandleFunc("/api/tasks", auth(getTasksHandler))
+	mux.HandleFunc("/api/task/done", auth(doneTaskHandler))
+	mux.HandleFunc("/api/signin", signinHandler)
 }
 
 // Обработчик для поиска след. даты задачи

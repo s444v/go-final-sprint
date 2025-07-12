@@ -81,6 +81,9 @@ func mRule(rule []string, dstart, now time.Time) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("cant convert day to int %w", err)
 			}
+			if day > 31 || day < -2 {
+				return "", errors.New("invalid day number")
+			}
 			// создаем дату с сегодняшним годом и месяцем
 			tmp := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 			// начинаем цикл пока tmp < now
@@ -124,11 +127,17 @@ func mRule(rule []string, dstart, now time.Time) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("cant convert month to int %w", err)
 			}
+			if month > 12 || month < 1 {
+				return "", errors.New("invalid month number")
+			}
 			// вложенный цикл по дням
 			for _, d := range strings.Split(rule[1], ",") {
 				day, err := strconv.Atoi(d)
 				if err != nil {
 					return "", fmt.Errorf("cant convert day to int %w", err)
+				}
+				if day > 31 || day < -2 {
+					return "", errors.New("invalid day number")
 				}
 				tmp := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 				// проверяем можно ли создать такую дату
