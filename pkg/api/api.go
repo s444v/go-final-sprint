@@ -10,6 +10,7 @@ import (
 const TIMEFORMAT = "20060102"
 const WEBDIR = "./web"
 
+// Инициализация обработчиков
 func HandlersInit(mux *http.ServeMux) {
 	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
 	mux.HandleFunc("/api/nextdate", nextDayHandler)
@@ -18,6 +19,7 @@ func HandlersInit(mux *http.ServeMux) {
 	mux.HandleFunc("/api/task/done", doneTaskHandler)
 }
 
+// Обработчик для поиска след. даты задачи
 func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	now, err := time.Parse(TIMEFORMAT, r.FormValue("now"))
 	if err != nil {
@@ -39,6 +41,7 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(result))
 }
 
+// Распределитель по методам для запроса "/api/task"
 func taskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -52,6 +55,7 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Обработчик для отметки о выполнении задачи
 func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	task, err := database.GetTask(id)
@@ -61,6 +65,7 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
+	// Если у задачи нет заданного повторения = удаляем
 	if task.Repeat == "" {
 		err = database.DeleteTask(id)
 		if err != nil {
@@ -68,18 +73,21 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, map[string]string{"error": err.Error()})
 			return
 		}
+		w.WriteHeader(http.StatusAccepted)
 		writeJSON(w, map[string]string{})
 		return
 	}
+	// Ищем след. дату для задачи
 	task.Date, err = NextDate(time.Now(), task.Date, task.Repeat)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}
+	// Обновляем базу данных с новой датой
 	err = database.UpdateTask(task)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		writeJSON(w, map[string]string{"error": err.Error()})
 		return
 	}

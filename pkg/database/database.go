@@ -16,6 +16,7 @@ const scheme = `
 
 var DB *sql.DB
 
+// Функция для инициализации базы данных
 func DbInit(dbFile string) error {
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {

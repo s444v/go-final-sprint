@@ -21,8 +21,10 @@ var PORT = ":" + func() string {
 	return "7540"
 }()
 
+// Создаем сервер
 func NewServer(logger *log.Logger) *Server {
 	mux := http.NewServeMux()
+	// Добавлем обработчики
 	api.HandlersInit(mux)
 
 	httpServer := &http.Server{

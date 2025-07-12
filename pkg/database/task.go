@@ -14,6 +14,7 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
+// Функция для реализации INSERT запроса в базу данных, возвращает id добавленной задачи
 func AddTask(task *Task) (int64, error) {
 	var id int64
 	query := `INSERT INTO scheduler (date, title, comment,repeat) VALUES (:date, :title, :com, :repeat)`
@@ -28,12 +29,14 @@ func AddTask(task *Task) (int64, error) {
 	return id, err
 }
 
+// Функция для реализации SELECT запроса в базу данных по указанному id
 func GetTask(id string) (*Task, error) {
 	var task Task
 	err := DB.QueryRow("SELECT * from scheduler WHERE id = :id", sql.Named("id", id)).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	return &task, err
 }
 
+// Функция для реализации UPDATE запроса в базу данных по указанному id
 func UpdateTask(task *Task) error {
 	query := `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat= ? WHERE id = ?`
 	res, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
@@ -50,6 +53,7 @@ func UpdateTask(task *Task) error {
 	return nil
 }
 
+// Функция для реализации DELETE запроса в базу данных по указанному id
 func DeleteTask(id string) error {
 	res, err := DB.Exec(`DELETE FROM scheduler WHERE id = ?`, id)
 	if err != nil {
@@ -65,6 +69,7 @@ func DeleteTask(id string) error {
 	return nil
 }
 
+// Функция для реализации SELECT запроса в базу данных, для поиска задач по параметру search
 func GetTasks(limit int, search string) ([]*Task, error) {
 	var tasks []*Task
 	query := "SELECT * from scheduler "
