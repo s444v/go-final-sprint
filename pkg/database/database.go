@@ -1,0 +1,31 @@
+package database
+
+import (
+	"database/sql"
+)
+
+const scheme = `
+    CREATE TABLE IF NOT EXISTS scheduler (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date CHAR(8) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        comment TEXT,
+        repeat VARCHAR(128) NOT NULL CHECK(length(repeat) <= 128)
+    );
+    `
+
+var DB *sql.DB
+
+// Функция для инициализации базы данных
+func DbInit(dbFile string) error {
+	db, err := sql.Open("sqlite", dbFile)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(scheme)
+	if err != nil {
+		return err
+	}
+	DB = db
+	return err
+}
