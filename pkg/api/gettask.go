@@ -11,15 +11,24 @@ func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": "id is required"})
+		err := writeJSON(w, map[string]string{"error": "id is required"})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	task, err := database.GetTask(id)
 	if err != nil {
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Возвращаем таску json файлом
 	w.WriteHeader(http.StatusOK)
-	writeJSON(w, task)
+	err = writeJSON(w, task)
+	if err != nil {
+		http.Error(w, "cant parse to json", http.StatusInternalServerError)
+	}
 }

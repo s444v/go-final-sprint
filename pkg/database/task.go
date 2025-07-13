@@ -33,7 +33,10 @@ func AddTask(task *Task) (int64, error) {
 func GetTask(id string) (*Task, error) {
 	var task Task
 	err := DB.QueryRow("SELECT * from scheduler WHERE id = :id", sql.Named("id", id)).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
-	return &task, err
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
 }
 
 // Функция для реализации UPDATE запроса в базу данных по указанному id
@@ -88,26 +91,26 @@ func GetTasks(limit int, search string) ([]*Task, error) {
 		query = query + whereQuery
 		rows, err = DB.Query(query, sql.Named("limit", limit), sql.Named("search", search))
 		if err != nil {
-			return make([]*Task, 0), err
+			return nil, err
 		}
 	} else {
 		query += "ORDER BY date LIMIT :limit"
 		rows, err = DB.Query(query, sql.Named("limit", limit))
 		if err != nil {
-			return make([]*Task, 0), err
+			return nil, err
 		}
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var t Task
 		if err := rows.Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat); err != nil {
-			return make([]*Task, 0), err
+			return nil, err
 		}
 		tasks = append(tasks, &t)
 
 	}
 	if err := rows.Err(); err != nil {
-		return make([]*Task, 0), err
+		return nil, err
 	}
 	if tasks == nil {
 		tasks = make([]*Task, 0)

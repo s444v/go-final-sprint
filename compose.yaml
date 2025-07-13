@@ -5,11 +5,11 @@ services:
       dockerfile: Dockerfile
     container_name: todoist
     ports:
-      - "7540:7540"
+      - "${TODO_PORT:-7540}:${TODO_PORT:-7540}"
     environment:
-      - TODO_PORT=7540
-      - TODO_DBFILE=scheduler.db
-      - TODO_PASSWORD=12345
+      - TODO_PORT=${TODO_PORT:-7540}
+      - TODO_DBFILE=${TODO_DBFILE:-scheduler.db}
+      - TODO_PASSWORD=${TODO_PASSWORD:-12345}
     volumes:
       - ./scheduler.db:/app/scheduler.db
     restart: unless-stopped

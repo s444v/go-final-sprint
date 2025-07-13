@@ -2,17 +2,26 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/s444v/go-final-sprint/pkg/database"
 )
 
-const TIMEFORMAT = "20060102"
-const WEBDIR = "./web"
+const TIME_FORMAT = "20060102"
+const WEB_DIR = "./web"
+const JWT_SECRET = "12345"
+
+var TODO_PASSWORD = func() string {
+	if p := os.Getenv("TODO_PASSWORD"); p != "" {
+		return p
+	}
+	return "12345"
+}()
 
 // Инициализация обработчиков
 func HandlersInit(mux *http.ServeMux) {
-	mux.Handle("/", http.FileServer(http.Dir(WEBDIR)))
+	mux.Handle("/", http.FileServer(http.Dir(WEB_DIR)))
 	mux.HandleFunc("/api/nextdate", nextDayHandler)
 	mux.HandleFunc("/api/task", auth(taskHandler))
 	mux.HandleFunc("/api/tasks", auth(getTasksHandler))
@@ -22,7 +31,11 @@ func HandlersInit(mux *http.ServeMux) {
 
 // Обработчик для поиска след. даты задачи
 func nextDayHandler(w http.ResponseWriter, r *http.Request) {
-	now, err := time.Parse(TIMEFORMAT, r.FormValue("now"))
+	if r.Method != http.MethodGet {
+		http.Error(w, "wrong method", http.StatusBadRequest)
+		return
+	}
+	now, err := time.Parse(TIME_FORMAT, r.FormValue("now"))
 	if err != nil {
 		http.Error(w, "cant parse time", http.StatusBadRequest)
 		return
@@ -30,7 +43,7 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 	if repeat == "" {
-		w.WriteHeader(http.StatusOK) //тут исправить
+		w.WriteHeader(http.StatusConflict) //тут исправить
 		return
 	}
 	result, err := NextDate(now, date, repeat)
@@ -39,7 +52,10 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	_, err = w.Write([]byte(result))
+	if err != nil {
+		http.Error(w, "cant parse to json", http.StatusInternalServerError)
+	}
 }
 
 // Распределитель по методам для запроса "/api/task"
@@ -53,17 +69,27 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 		putTaskHandler(w, r)
 	case http.MethodDelete:
 		deleteTaskHandler(w, r)
+	default:
+		http.Error(w, "wrong method", http.StatusBadRequest)
+		return
 	}
 }
 
 // Обработчик для отметки о выполнении задачи
 func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "wrong method", http.StatusBadRequest)
+		return
+	}
 	id := r.FormValue("id")
 	task, err := database.GetTask(id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Если у задачи нет заданного повторения = удаляем
@@ -71,11 +97,17 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 		err = database.DeleteTask(id)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			writeJSON(w, map[string]string{"error": err.Error()})
+			err = writeJSON(w, map[string]string{"error": err.Error()})
+			if err != nil {
+				http.Error(w, "cant parse to json", http.StatusInternalServerError)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusAccepted)
-		writeJSON(w, map[string]string{})
+		err = writeJSON(w, map[string]string{})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Ищем след. дату для задачи
@@ -89,9 +121,15 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err = database.UpdateTask(task)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
-	writeJSON(w, map[string]string{})
+	err = writeJSON(w, map[string]string{})
+	if err != nil {
+		http.Error(w, "cant parse to json", http.StatusInternalServerError)
+	}
 }

@@ -10,7 +10,7 @@ import (
 // Фукнция для поиска след. даты по заданному правилу
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	var nextDate string
-	dstartTime, err := time.Parse(TIMEFORMAT, dstart)
+	dstartTime, err := time.Parse(TIME_FORMAT, dstart)
 	if err != nil {
 		return "", fmt.Errorf("cant parse start_date into time.Time %w", err)
 	}

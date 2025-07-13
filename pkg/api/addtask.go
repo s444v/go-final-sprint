@@ -16,34 +16,52 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Нет названия задачи
 	if task.Title == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": "Ошибка"})
+		err = writeJSON(w, map[string]string{"error": "Ошибка"})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Проверка на валидность даты
 	if err = checkDate(&task); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Добавление в базу данных
 	id, err := database.AddTask(&task)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Возвращаем id добавленной задачи
 	w.WriteHeader(http.StatusCreated)
-	writeJSON(w, map[string]string{"id": fmt.Sprint(id)})
+	err = writeJSON(w, map[string]string{"id": fmt.Sprint(id)})
+	if err != nil {
+		http.Error(w, "cant parse to json", http.StatusInternalServerError)
+	}
 }

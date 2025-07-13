@@ -11,16 +11,25 @@ func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		writeJSON(w, map[string]string{"error": "id is required"})
+		err := writeJSON(w, map[string]string{"error": "id is required"})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// Вызов функции для удаления задачи по id
 	if err := database.DeleteTask(id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		writeJSON(w, map[string]string{"error": err.Error()})
+		err = writeJSON(w, map[string]string{"error": err.Error()})
+		if err != nil {
+			http.Error(w, "cant parse to json", http.StatusInternalServerError)
+		}
 		return
 	}
 	// возвращаем пустой json если все хорошо
 	w.WriteHeader(http.StatusAccepted)
-	writeJSON(w, map[string]string{})
+	err := writeJSON(w, map[string]string{})
+	if err != nil {
+		http.Error(w, "cant parse to json", http.StatusInternalServerError)
+	}
 }

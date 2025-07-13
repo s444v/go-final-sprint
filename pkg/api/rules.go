@@ -29,7 +29,7 @@ func dRule(rule []string, dstart, now time.Time) (string, error) {
 			break
 		}
 	}
-	return nextDate.Format(TIMEFORMAT), err
+	return nextDate.Format(TIME_FORMAT), err
 }
 
 /*
@@ -59,7 +59,7 @@ func wRule(rule []string, dstart, now time.Time) (string, error) {
 	}
 	//к сегодня добавляется интервал
 	nextDate = nextDate.AddDate(0, 0, interval+1)
-	return nextDate.Format(TIMEFORMAT), nil
+	return nextDate.Format(TIME_FORMAT), nil
 }
 
 /*
@@ -115,7 +115,7 @@ func mRule(rule []string, dstart, now time.Time) (string, error) {
 				nearestDate = tmp
 			}
 		}
-		return nearestDate.Format(TIMEFORMAT), nil
+		return nearestDate.Format(TIME_FORMAT), nil
 	}
 	// если месяцы указаны
 	if len(rule) == 3 {
@@ -165,7 +165,7 @@ func mRule(rule []string, dstart, now time.Time) (string, error) {
 				}
 			}
 		}
-		return nearestDate.Format(TIMEFORMAT), nil
+		return nearestDate.Format(TIME_FORMAT), nil
 	}
 	return "", nil
 }
@@ -182,5 +182,5 @@ func yRule(dstart, now time.Time) string {
 			break
 		}
 	}
-	return nextDate.Format(TIMEFORMAT)
+	return nextDate.Format(TIME_FORMAT)
 }

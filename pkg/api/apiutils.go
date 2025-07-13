@@ -11,9 +11,9 @@ import (
 )
 
 // Функция для записи в responseWriter v interface в json
-func writeJSON(w http.ResponseWriter, v interface{}) {
+func writeJSON(w http.ResponseWriter, v interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(v)
+	return json.NewEncoder(w).Encode(v)
 }
 
 // Функция для проверки даты
@@ -21,9 +21,9 @@ func checkDate(task *database.Task) error {
 	now := time.Now()
 	// если дата отсутствует, то берем сегодняшнюю дату
 	if task.Date == "" {
-		task.Date = now.Format(TIMEFORMAT)
+		task.Date = now.Format(TIME_FORMAT)
 	}
-	t, err := time.Parse(TIMEFORMAT, task.Date)
+	t, err := time.Parse(TIME_FORMAT, task.Date)
 	if err != nil {
 		return fmt.Errorf("дата представлена в формате, отличном от 20060102, %w", err)
 	}
@@ -31,7 +31,7 @@ func checkDate(task *database.Task) error {
 	if after(now, t) {
 		if len(task.Repeat) == 0 {
 			// если правила повторения нет, то берём сегодняшнее число
-			task.Date = now.Format(TIMEFORMAT)
+			task.Date = now.Format(TIME_FORMAT)
 		} else {
 			next, err := NextDate(now, task.Date, task.Repeat)
 			if err != nil {

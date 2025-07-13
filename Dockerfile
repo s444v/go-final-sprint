@@ -9,7 +9,7 @@ COPY . .
 
 RUN go build -o server main.go
 
-FROM ubuntu:latest
+FROM alpine:latest
 
 WORKDIR /app
 
@@ -20,6 +20,6 @@ ENV TODO_PORT=7540
 ENV TODO_DBFILE=scheduler.db
 ENV TODO_PASSWORD=12345
 
-EXPOSE 7540
+EXPOSE ${TODO_PORT}
 
 CMD ["./server"]
